@@ -1,5 +1,8 @@
 import streamlit as st
 
+# ✅ Page config must be first
+st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
+
 # --- Custom Styling ---
 st.markdown("""
 <style>
@@ -34,20 +37,19 @@ hr {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Streamlit Setup ---
-st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
+# --- Title and Intro ---
 st.title("🏏 **Cric Simulator**")
 st.markdown("""
 Simulate your chase like an analyst.  
 _Adjusts for target pressure, wickets, and match momentum. Inspired by 🧠 tweet logic._
 """)
 
-# --- Chase Logic Function ---
+# --- Smart Par Score Logic ---
 def cric_par_score(current_over, current_wickets, target_score):
     average_target = 180
     difficulty_boost = min((target_score - average_target) / 10 * 0.02, 0.10) if target_score > average_target else 0
 
-    # Phase-wise progression
+    # Phase-based progression
     if current_over <= 6:
         progress_percent = (current_over / 6) * (0.293 + difficulty_boost)
     elif current_over <= 10:
@@ -59,7 +61,7 @@ def cric_par_score(current_over, current_wickets, target_score):
 
     base_score = target_score * progress_percent
 
-    # Soft scaling wicket penalty
+    # Smart weighted wicket penalty
     ideal_wickets = current_over / 5
     extra_wickets = max(0, current_wickets - ideal_wickets)
 
@@ -75,22 +77,22 @@ def cric_par_score(current_over, current_wickets, target_score):
     wicket_penalty = extra_wickets * over_weight * 4.5
     return round(base_score + wicket_penalty)
 
-# --- Inputs ---
+# --- User Inputs ---
 target = st.number_input("🎯 Target Score", min_value=50, max_value=300, value=222)
 current_over = st.slider("⏱️ Overs Completed", min_value=1, max_value=20, value=6)
 wickets = st.slider("❌ Wickets Lost", min_value=0, max_value=10, value=2)
 actual_score = st.number_input("📌 Your Current Score", min_value=0, max_value=target, value=54)
 
-# --- Calculate Current Par ---
+# --- Par Calculation ---
 par = cric_par_score(current_over, wickets, target)
 diff = actual_score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
 
-# --- Output Section ---
+# --- Output Display ---
 st.subheader(f"📍 Required Par Score at {current_over} overs, {wickets} wickets: **{par}**")
 st.metric(label="Your Progress", value=f"{actual_score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Full Roadmap Option ---
+# --- Full Roadmap Section ---
 st.markdown("___")
 if st.checkbox("🔁 Show Full Chase Checkpoints"):
     st.markdown("### 🔄 Projected Par Score Milestones")
@@ -99,7 +101,7 @@ if st.checkbox("🔁 Show Full Chase Checkpoints"):
             proj_par = cric_par_score(over, wickets, target)
             st.markdown(f"- **Over {over}** ➤ {proj_par}")
 
-# --- 10 Over Projection if Current < 10 ---
+# --- 10-Over Forward Projection ---
 st.markdown("___")
 if current_over < 10:
     st.markdown("### 🔮 Where Should They Be at 10 Overs?")
