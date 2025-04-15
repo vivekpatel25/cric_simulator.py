@@ -5,7 +5,7 @@ def cric_par_score(current_over, current_wickets, target_score):
     # --- Difficulty boost if target is high ---
     average_target = 180
     if target_score > average_target:
-        difficulty_boost = (target_score - average_target) / 10 * 0.05
+      difficulty_boost = (target_score - average_target) / 10 * 0.02
     else:
         difficulty_boost = 0
 
