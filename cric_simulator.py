@@ -1,55 +1,69 @@
 import streamlit as st
 
-# ✅ Page config must be first
+# ✅ Page Config First
 st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
 
-# --- Custom Styling ---
+# --- Modern Vibrant Styling ---
 st.markdown("""
 <style>
-body {
-    background-color: #fdfbfb;
+/* Gradient background */
+body, .stApp {
+    background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
 }
+
+/* Heading style */
 h1 {
-    color: #D72638;
-    font-family: 'Arial Black';
+    color: #F83600;
+    font-family: 'Segoe UI Black', sans-serif;
 }
-section.main > div {
-    padding-top: 2rem;
-}
+
+/* Metric card styling */
 div[data-testid="metric-container"] {
-    background-color: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
+    background-color: #ffffffaa;
+    border: 2px solid #F83600;
+    border-radius: 15px;
     padding: 15px;
-    margin: 8px 0px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
+
+/* Metric delta styling */
 div[data-testid="stMetricDelta"] {
     font-size: 1.1rem;
     font-weight: bold;
 }
+
+/* Slider and input label styling */
+label {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Section divider bar */
 hr {
     border: 0;
-    height: 2px;
-    background: linear-gradient(to right, #D72638, #3F88C5);
+    height: 3px;
+    background: linear-gradient(to right, #ff512f, #dd2476);
     margin-top: 2rem;
     margin-bottom: 2rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Title and Intro ---
+# --- Title & Intro ---
 st.title("🏏 **Cric Simulator**")
 st.markdown("""
-Simulate your chase like an analyst.  
-_Adjusts for target pressure, wickets, and match momentum. Inspired by 🧠 tweet logic._
+Simulate your run chase like a strategist.  
+_Adjusts dynamically for target pressure, wickets lost, and match phase._
 """)
 
-# --- Smart Par Score Logic ---
+# --- Core Logic ---
 def cric_par_score(current_over, current_wickets, target_score):
     average_target = 180
     difficulty_boost = min((target_score - average_target) / 10 * 0.02, 0.10) if target_score > average_target else 0
 
-    # Phase-based progression
+    # Scoring curve by phase
     if current_over <= 6:
         progress_percent = (current_over / 6) * (0.293 + difficulty_boost)
     elif current_over <= 10:
@@ -61,7 +75,7 @@ def cric_par_score(current_over, current_wickets, target_score):
 
     base_score = target_score * progress_percent
 
-    # Smart weighted wicket penalty
+    # Smart scaling penalty
     ideal_wickets = current_over / 5
     extra_wickets = max(0, current_wickets - ideal_wickets)
 
@@ -78,22 +92,26 @@ def cric_par_score(current_over, current_wickets, target_score):
     return round(base_score + wicket_penalty)
 
 # --- User Inputs ---
-target = st.number_input("🎯 Target Score", min_value=50, max_value=300, value=222)
-current_over = st.slider("⏱️ Overs Completed", min_value=1, max_value=20, value=6)
-wickets = st.slider("❌ Wickets Lost", min_value=0, max_value=10, value=2)
-actual_score = st.number_input("📌 Your Current Score", min_value=0, max_value=target, value=54)
+st.markdown("### 🎯 Match Scenario")
+target = st.number_input("Target Score", min_value=50, max_value=300, value=222)
+current_over = st.slider("Overs Completed", min_value=1, max_value=20, value=6)
+wickets = st.slider("Wickets Lost", min_value=0, max_value=10, value=2)
+actual_score = st.number_input("Your Current Score", min_value=0, max_value=target, value=54)
 
-# --- Par Calculation ---
+# --- Current Calculation ---
 par = cric_par_score(current_over, wickets, target)
 diff = actual_score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
 
 # --- Output Display ---
-st.subheader(f"📍 Required Par Score at {current_over} overs, {wickets} wickets: **{par}**")
+st.markdown("### 📍 Required Score")
+st.subheader(f"Par Score at {current_over} overs, {wickets} wickets: **{par}**")
 st.metric(label="Your Progress", value=f"{actual_score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Full Roadmap Section ---
+# --- Section Divider ---
 st.markdown("___")
+
+# --- Optional: Show Milestone Checkpoints ---
 if st.checkbox("🔁 Show Full Chase Checkpoints"):
     st.markdown("### 🔄 Projected Par Score Milestones")
     for over in [6, 10, 15, 20]:
@@ -101,7 +119,7 @@ if st.checkbox("🔁 Show Full Chase Checkpoints"):
             proj_par = cric_par_score(over, wickets, target)
             st.markdown(f"- **Over {over}** ➤ {proj_par}")
 
-# --- 10-Over Forward Projection ---
+# --- Optional: Predict 10 Over Mark ---
 st.markdown("___")
 if current_over < 10:
     st.markdown("### 🔮 Where Should They Be at 10 Overs?")
