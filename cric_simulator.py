@@ -1,69 +1,63 @@
 import streamlit as st
 
-# ✅ Must come first
+# ✅ Set Streamlit Page Config
 st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
 
-# --- Dark Theme Styling ---
+# --- Light Blue Theme Styling ---
 st.markdown("""
 <style>
+/* Light Blue Background */
 body, .stApp {
-    background-color: #111827;
-    color: #F3F4F6;
+    background-color: #e0f2fe;
 }
 
-/* Heading */
+/* Title Styling */
 h1 {
-    color: #FACC15;
+    color: #1D4ED8;
     font-family: 'Segoe UI Black', sans-serif;
 }
 
-/* Input labels */
+/* Label Colors */
 label {
-    color: #FCD34D !important;
+    color: #1E3A8A !important;
     font-weight: bold;
 }
 
-/* Input + slider box */
-input, .stSlider {
-    background-color: #1f2937;
-    color: #F3F4F6;
-}
-
-/* Metric cards */
+/* Card-like Metric Styling */
 div[data-testid="metric-container"] {
-    background-color: #1e293b;
-    border: 2px solid #F59E0B;
+    background-color: #ffffff;
+    border: 2px solid #60A5FA;
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
 div[data-testid="stMetricDelta"] {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: bold;
 }
 
-/* Section divider */
+/* Divider Bar */
 hr {
     border: none;
     height: 2px;
-    background: linear-gradient(to right, #F59E0B, #10B981);
+    background: linear-gradient(to right, #60A5FA, #3B82F6);
     margin-top: 2rem;
     margin-bottom: 2rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Title & Subheading ---
+# --- App Header ---
 st.title("🏏 **Cric Simulator**")
 st.markdown("""
-Simulate your run chase in style.  
-🌑 Dark mode activated. Smart chase logic + clean interface.
+Simulate your run chase with phase-based par logic.  
+Soft blue mode for chill cricket brains 💡💙
 """)
 
-# --- Chase Logic ---
+# --- Smart Par Score Logic ---
 def cric_par_score(current_over, current_wickets, target_score):
     average_target = 180
     difficulty_boost = min((target_score - average_target) / 10 * 0.02, 0.10) if target_score > average_target else 0
@@ -94,23 +88,24 @@ def cric_par_score(current_over, current_wickets, target_score):
     wicket_penalty = extra_wickets * over_weight * 4.5
     return round(base_score + wicket_penalty)
 
-# --- Inputs ---
+# --- User Inputs ---
 st.markdown("### 🎯 Match Scenario")
 target = st.number_input("Target Score", min_value=50, max_value=300, value=222)
 current_over = st.slider("Overs Completed", min_value=1, max_value=20, value=6)
 wickets = st.slider("Wickets Lost", min_value=0, max_value=10, value=2)
 actual_score = st.number_input("Your Current Score", min_value=0, max_value=target, value=54)
 
-# --- Result Display ---
+# --- Calculate Par ---
 par = cric_par_score(current_over, wickets, target)
 diff = actual_score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
 
+# --- Display Result ---
 st.markdown("### 📍 Required Score")
 st.subheader(f"Par Score at {current_over} overs, {wickets} wickets: **{par}**")
 st.metric(label="Your Progress", value=f"{actual_score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Roadmap ---
+# --- Roadmap Option ---
 st.markdown("___")
 if st.checkbox("🔁 Show Full Chase Checkpoints"):
     st.markdown("### 🔄 Projected Par Score Milestones")
@@ -119,7 +114,7 @@ if st.checkbox("🔁 Show Full Chase Checkpoints"):
             proj_par = cric_par_score(over, wickets, target)
             st.markdown(f"- **Over {over}** ➤ {proj_par}")
 
-# --- Future Checkpoint Projections ---
+# --- Future Par Projection for 10 Overs ---
 st.markdown("___")
 if current_over < 10:
     st.markdown("### 🔮 Where Should They Be at 10 Overs?")
