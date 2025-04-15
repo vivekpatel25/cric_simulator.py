@@ -55,3 +55,13 @@ if st.checkbox("🔁 Show Full Chase Checkpoints"):
         if over >= current_over:
             proj_par = cric_par_score(over, wickets, target)
             st.markdown(f"- Over {over}: **{proj_par}**")
+if current_over < 10:
+    st.markdown("### 🔮 Projections for Over 10:")
+    for projected_wickets in range(wickets, wickets + 4):
+        par_10 = cric_par_score(10, projected_wickets, target)
+        st.markdown(f"""
+        - If **{projected_wickets} wickets** down at 10 overs:
+            - 📊 Par Score: **{par_10}**
+            - ➕ Runs to Add: **{par_10 - actual_score}**
+            - 🔁 Required RR: **{round((target - par_10) / (20 - 10), 2)}**
+        """)
