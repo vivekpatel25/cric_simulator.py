@@ -54,7 +54,6 @@ hr {
 st.title("🏏 **Cric Simulator**")
 st.markdown("""
 Simulate your run chase with phase-based par logic.  
-Soft blue mode for chill cricket brains 💡💙
 """)
 
 # --- Smart Par Score Logic ---
