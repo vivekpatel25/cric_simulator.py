@@ -1,9 +1,9 @@
 import streamlit as st
 
-# --- Set Page Config ---
+# --- Page Config ---
 st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
 
-# --- Styling for Light Blue Theme ---
+# --- Light Blue Styling ---
 st.markdown("""
 <style>
 body, .stApp {
@@ -42,14 +42,17 @@ hr {
 
 # --- App Title ---
 st.title("🏏 **Cric Simulator**")
-st.markdown("Simulate par score and chase projections for any match format. Fully dynamic. Fully cricket brain approved.")
+st.markdown("Select match format and simulate par score over-by-over with smart logic for wickets and batting depth.")
+
+# --- Match Format Selection FIRST ---
+match_format = st.selectbox("🕒 Select Match Format (Total Overs)", list(range(5, 21)), index=2)
 
 # --- Core Logic ---
 def cric_par_score(current_over, current_wickets, target_score, total_overs, batters_left):
     average_target = 180
     difficulty_boost = min((target_score - average_target) / 10 * 0.02, 0.10) if target_score > average_target else 0
 
-    # Phase calculation based on total_overs
+    # Custom phase breakpoints based on total overs
     pp_end = 0.3 * total_overs
     mid_end = 0.75 * total_overs
 
@@ -62,7 +65,7 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
 
     base_score = target_score * progress_percent
 
-    # Smart Wicket Pressure Scaling
+    # Wicket penalty logic
     ideal_wickets = current_over / 5
     extra_wickets = max(0, current_wickets - ideal_wickets)
 
@@ -73,7 +76,7 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
     else:
         over_weight = 1.3
 
-    # Batting depth effect
+    # Batting depth factor
     if batters_left >= 3:
         batter_factor = 0.8
     elif batters_left == 2:
@@ -87,36 +90,32 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
     par = round(base_score - penalty)
     return max(0, min(par, target_score))
 
-# --- User Inputs ---
-st.markdown("### 🎯 Match Format")
-
-total_overs = st.selectbox("🕒 Select Match Format (Total Overs)", list(range(5, 21)), index=15)
-
+# --- User Inputs AFTER Match Format ---
 st.markdown("### 📌 Match Situation")
 
 target = st.number_input("🏹 Target Score", min_value=30, max_value=300, value=87)
-current_over = st.slider("⏱️ Overs Completed", 1, total_overs, 3)
+overs_completed = st.slider("⏱️ Overs Completed", 1, match_format, 3)
 wickets = st.slider("❌ Wickets Lost", 0, 10, 3)
 actual_score = st.number_input("📌 Your Current Score", 0, target, 36)
 batters_left = st.slider("🧠 Capable Batters or All-Rounders Left (excluding current 2)", 0, 6, 5)
 
-# --- Main Par Score Calculation ---
-par = cric_par_score(current_over, wickets, target, total_overs, batters_left)
+# --- Current Par Calculation ---
+par = cric_par_score(overs_completed, wickets, target, match_format, batters_left)
 diff = actual_score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
 
 st.markdown("### 📍 Par Score Analysis")
-st.subheader(f"Par Score at {current_over} overs, {wickets} wickets: **{par}**")
+st.subheader(f"Par Score at {overs_completed} overs, {wickets} wickets: **{par}**")
 st.metric(label="Your Progress", value=f"{actual_score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Full Simulation for Remaining Overs and Wickets ---
+# --- Future Projection Logic ---
 st.markdown("___")
-st.markdown("### 🔮 Future Par Score Projections")
+st.markdown("### 🔮 Smart Projections for All Remaining Overs")
 
-for wkts in range(wickets, 11):
-    st.markdown(f"#### If **{wkts} wickets** down:")
-    lines = []
-    for over in range(current_over + 1, total_overs + 1):
-        future_par = cric_par_score(over, wkts, target, total_overs, batters_left)
-        lines.append(f"- Over {over}: **{future_par}**")
-    st.markdown("\n".join(lines))
+for over in range(overs_completed + 1, match_format + 1):
+    st.markdown(f"#### Over {over}")
+    proj_lines = []
+    for w in range(wickets, 11):
+        proj = cric_par_score(over, w, target, match_format, batters_left)
+        proj_lines.append(f"- If **{w} wickets** down: **{proj}**")
+    st.markdown("\n".join(proj_lines))
