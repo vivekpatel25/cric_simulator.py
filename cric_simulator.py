@@ -42,17 +42,17 @@ hr {
 
 # --- App Title ---
 st.title("🏏 **Cric Simulator**")
-st.markdown("Select match format and simulate par score over-by-over with smart logic for wickets and batting depth.")
+st.markdown("Simulate your chase phase-by-phase with smart par logic based on target, wickets, and batting depth.")
 
-# --- Match Format Selection FIRST ---
+# --- Match Format Selection ---
 match_format = st.selectbox("🕒 Select Match Format (Total Overs)", list(range(5, 21)), index=15)
 
-# --- Core Logic with FIXED Pressure Logic ---
+# --- Core Logic ---
 def cric_par_score(current_over, current_wickets, target_score, total_overs, batters_left):
     average_target = 180
     difficulty_boost = min((target_score - average_target) / 10 * 0.02, 0.10) if target_score > average_target else 0
 
-    # Custom phase breakpoints based on total overs
+    # Phase % logic scaled to match format
     pp_end = 0.3 * total_overs
     mid_end = 0.75 * total_overs
 
@@ -65,7 +65,7 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
 
     base_score = target_score * progress_percent
 
-    # Wicket pressure logic — now boosts par when more wickets are lost
+    # Pressure logic
     ideal_wickets = current_over / 5
     extra_wickets = max(0, current_wickets - ideal_wickets)
 
@@ -81,26 +81,25 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
     elif batters_left == 2:
         batter_factor = 1.0
     elif batters_left == 1:
-        batter_factor = 1.2
+        batter_factor = 1.3
     else:
-        batter_factor = 1.5
+        batter_factor = 1.6
 
-    # ✅ FIX: now adds pressure boost instead of subtracting
     pressure_boost = extra_wickets * over_weight * 4.5 * batter_factor
     par = round(base_score + pressure_boost)
 
     return max(0, min(par, target_score))
 
-# --- User Inputs AFTER Match Format ---
+# --- Inputs ---
 st.markdown("### 📌 Match Situation")
 
-target = st.number_input("🏹 Target Score", min_value=30, max_value=300, value=167)
+target = st.number_input("🎯 Target Score", min_value=30, max_value=300, value=167)
 overs_completed = st.slider("⏱️ Overs Completed", 1, match_format, 6)
 wickets = st.slider("❌ Wickets Lost", 0, 10, 1)
 actual_score = st.number_input("📌 Your Current Score", 0, target, 36)
 batters_left = st.slider("🧠 Capable Batters or All-Rounders Left (excluding current 2)", 0, 6, 6)
 
-# --- Current Par Calculation ---
+# --- Current Par ---
 par = cric_par_score(overs_completed, wickets, target, match_format, batters_left)
 diff = actual_score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
@@ -109,14 +108,18 @@ st.markdown("### 📍 Par Score Analysis")
 st.subheader(f"📍 Par Score at {overs_completed} overs, {wickets} wickets: **{par}**")
 st.metric(label="Your Progress", value=f"{actual_score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Future Projection Logic ---
-st.markdown("___")
-st.markdown("### 🔮 Smart Projections for All Remaining Overs")
+# --- Future Projection ---
+st.markdown("---")
+st.markdown("### 🔮 Projected Par Scores for All Future Overs and Wicket Scenarios")
 
 for over in range(overs_completed + 1, match_format + 1):
     st.markdown(f"#### Over {over}")
-    proj_lines = []
-    for w in range(wickets, 11):
-        proj = cric_par_score(over, w, target, match_format, batters_left)
-        proj_lines.append(f"- If **{w} wickets** down: **{proj}**")
-    st.markdown("\n".join(proj_lines))
+    future_lines = []
+    for future_w in range(wickets, 11):
+        # Adjust batting depth for each scenario
+        wickets_added = future_w - wickets
+        future_batters_left = max(0, batters_left - wickets_added)
+
+        future_par = cric_par_score(over, future_w, target, match_format, future_batters_left)
+        future_lines.append(f"- If **{future_w} wickets** down: **{future_par}**")
+    st.markdown("\n".join(future_lines))
