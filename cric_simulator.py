@@ -1,22 +1,17 @@
 import streamlit as st
 
-# --- Page Setup ---
+# --- Page Config ---
 st.set_page_config(page_title="Cric Simulator", page_icon="🏏")
 
-# --- Theme Selection ---
+# --- Theme Toggle ---
 theme = st.radio("🌓 Choose Theme", ["Light", "Dark"], horizontal=True)
 
 # --- Theme Styling ---
 if theme == "Dark":
     st.markdown("""
     <style>
-    body, .stApp {
-        background-color: #0f172a;
-        color: #f1f5f9;
-    }
-    label {
-        color: #f8fafc !important;
-    }
+    body, .stApp { background-color: #0f172a; color: #f1f5f9; }
+    label { color: #f8fafc !important; }
     div[data-testid="metric-container"] {
         background-color: #1e293b;
         border: 2px solid #38bdf8;
@@ -28,13 +23,8 @@ if theme == "Dark":
 else:
     st.markdown("""
     <style>
-    body, .stApp {
-        background-color: #ffffff;
-        color: #1e293b;
-    }
-    label {
-        color: #1e293b !important;
-    }
+    body, .stApp { background-color: #ffffff; color: #1e293b; }
+    label { color: #1e293b !important; }
     div[data-testid="metric-container"] {
         background-color: #f8fafc;
         border: 2px solid #60a5fa;
@@ -44,14 +34,14 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-# --- Title ---
+# --- App Title ---
 st.title("🏏 Cric Simulator")
-st.markdown("Simulate chases with smart par score logic, RRR pressure, and milestone targets.")
+st.markdown("Match-aware par score simulator with RRR, pressure logic, milestones & future projections.")
 
-# --- Match Format ---
-match_format = st.selectbox("🕒 Select Match Format (Overs)", list(range(5, 21)), index=15)
+# --- Match Format Selector ---
+match_format = st.selectbox("🕒 Match Format (Overs)", list(range(5, 21)), index=15)
 
-# --- Smart Par Logic Function ---
+# --- Par Score Function ---
 def cric_par_score(current_over, current_wickets, target_score, total_overs, batters_left):
     avg_target = 180
     diff_boost = min((target_score - avg_target) / 10 * 0.02, 0.10) if target_score > avg_target else 0
@@ -74,7 +64,7 @@ def cric_par_score(current_over, current_wickets, target_score, total_overs, bat
     pressure = extra_wickets * over_weight * 4.5 * batter_factor
     return max(0, min(round(base_score + pressure), target_score))
 
-# --- Inputs ---
+# --- User Inputs ---
 st.markdown("### 📌 Match Situation")
 target = st.number_input("🎯 Target Score", 30, 300, 167)
 overs = st.slider("⏱️ Overs Completed", 1, match_format, 6)
@@ -82,15 +72,15 @@ wickets = st.slider("❌ Wickets Lost", 0, 10, 2)
 score = st.number_input("📌 Current Score", 0, target, 45)
 batters_left = st.slider("🧠 Batters/All-Rounders Left", 0, 6, 4)
 
-# --- Current Par Calculation ---
+# --- Current Par Score ---
 par = cric_par_score(overs, wickets, target, match_format, batters_left)
 diff = score - par
 status = "✅ Ahead" if diff >= 0 else "❌ Behind"
 
-st.markdown(f"### 📍 Par at {overs} Overs, {wickets} Wickets: **{par}**")
+st.markdown(f"### 📍 Par Score at {overs} Overs, {wickets} Wickets: **{par}**")
 st.metric("Your Score", f"{score} ({'+' if diff >= 0 else ''}{diff})", delta=status)
 
-# --- Required Run Rate (RRR) + Commentary ---
+# --- Required Run Rate (RRR) ---
 st.markdown("### 📈 Required Run Rate (RRR)")
 remaining_overs = match_format - overs
 rrr = round((target - score) / remaining_overs, 2) if remaining_overs > 0 else 0
@@ -98,20 +88,28 @@ rrr = round((target - score) / remaining_overs, 2) if remaining_overs > 0 else 0
 if batters_left >= 3:
     rrr_comment = "👍 RRR is manageable with strong depth"
 elif batters_left == 2:
-    rrr_comment = "⚠️ RRR rising — stay watchful"
+    rrr_comment = "⚠️ RRR rising — stay alert"
 else:
-    rrr_comment = "🚨 High RRR & thin batting — risk increasing"
+    rrr_comment = "🚨 High RRR & shallow depth — high risk"
 
 st.markdown(f"**RRR:** `{rrr}` → {rrr_comment}")
 
-# --- Milestone Projections (Phase Targets) ---
-st.markdown("### 🧭 Phase-Based Par Targets")
-milestones = [6, 10, 15, 20]
-for m in milestones:
-    if m <= match_format:
-        phase_par = cric_par_score(m, wickets, target, match_format, batters_left)
-        st.markdown(f"- Over **{m}**: Par Score = `{phase_par}`")
+# --- Milestone Par Targets ---
+st.markdown("### 🧭 Phase-Based Milestone Targets")
+for milestone in [6, 10, 15, 20]:
+    if milestone <= match_format:
+        phase_par = cric_par_score(milestone, wickets, target, match_format, batters_left)
+        st.markdown(f"- Over **{milestone}**: Par Score = `{phase_par}`")
 
-# --- Future Simulation Title (Extend if needed)
-st.markdown("---")
-st.markdown("### 🔮 Future Par Score Projections Coming...")
+# --- 🔮 Future Projections by Over & Wickets ---
+st.markdown("### 🔮 Future Par Score Projections by Wickets Lost")
+
+for future_over in range(overs + 1, match_format + 1):
+    st.markdown(f"#### Over {future_over}")
+    lines = []
+    for w in range(wickets, 11):
+        added = w - wickets
+        future_batters = max(0, batters_left - added)
+        future_par = cric_par_score(future_over, w, target, match_format, future_batters)
+        lines.append(f"- If **{w} wickets** down: **{future_par}**")
+    st.markdown("\n".join(lines))
